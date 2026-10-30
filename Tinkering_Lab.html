@@ -1,0 +1,2749 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildSmart - Construction Material Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316', // Safety Orange
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            navy: '#0f172a',
+                            dark: '#1e293b',
+                            accent: '#10b981' // Eco Green
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for clean dashboard UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 font-sans antialiased bg-slate-50 flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Floating Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- 0. LOGIN & PROFILE SELECTION OVERLAY PAGE -->
+    <!-- ========================================== -->
+    <div id="auth-overlay" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4 overflow-y-auto">
+        <!-- Background Ambient Glows -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 z-10 animate-fade-in">
+            
+            <!-- Left Branding Banner -->
+            <div class="md:col-span-5 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800">
+                <div>
+                    <div class="flex items-center space-x-3 mb-8">
+                        <div class="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-brand-500/30">
+                            <i class="fa-solid fa-helmet-safety"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-xl tracking-tight text-white">Build<span class="text-brand-500">Smart</span></h1>
+                            <p class="text-[10px] text-slate-400 font-medium tracking-wider uppercase">Construction ERP</p>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-white tracking-tight leading-snug">Smart Enterprise Construction Management</h2>
+                    <p class="text-xs text-slate-400 mt-3 leading-relaxed">Control material inventories, budget metrics, supplier comparison matrix, and real-time site operations.</p>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-slate-800/80">
+                    <div class="flex items-center space-x-3 text-xs text-slate-400">
+                        <i class="fa-solid fa-shield-halved text-emerald-500 text-base"></i>
+                        <span>Role-Based Access Control • Active Session Managed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Login Form & Quick Profile Switcher -->
+            <div class="md:col-span-7 p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+                <div>
+                    <!-- Form Header Tabs -->
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex space-x-4">
+                            <button id="tab-auth-login" onclick="switchAuthTab('login')" class="text-sm font-bold text-brand-500 border-b-2 border-brand-500 pb-2 transition">Sign In</button>
+                            <button id="tab-auth-register" onclick="switchAuthTab('register')" class="text-sm font-bold text-slate-400 hover:text-white border-b-2 border-transparent pb-2 transition">Create Account</button>
+                        </div>
+                        <span class="text-[11px] text-slate-400">v2.4 Enterprise</span>
+                    </div>
+
+                    <!-- Quick Profile Preset Selector (Interactive Suggestion) -->
+                    <div class="mt-4 space-y-2">
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Quick Demo Login As Role:</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button type="button" onclick="selectRolePreset('contractor')" class="role-card p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-brand-500 text-left transition flex flex-col justify-between space-y-1">
+                                <i class="fa-solid fa-hard-hat text-brand-500 text-sm"></i>
+                                <div>
+                                    <div class="text-[11px] font-bold text-white leading-tight">Contractor</div>
+                                    <div class="text-[9px] text-slate-400">Rajesh K.</div>
+                                </div>
+                            </button>
+
+                            <button type="button" onclick="selectRolePreset('projectmanager')" class="role-card p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-brand-500 text-left transition flex flex-col justify-between space-y-1">
+                                <i class="fa-solid fa-user-gear text-blue-400 text-sm"></i>
+                                <div>
+                                    <div class="text-[11px] font-bold text-white leading-tight">Manager</div>
+                                    <div class="text-[9px] text-slate-400">Ananya R.</div>
+                                </div>
+                            </button>
+
+                            <button type="button" onclick="selectRolePreset('siteengineer')" class="role-card p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-brand-500 text-left transition flex flex-col justify-between space-y-1">
+                                <i class="fa-solid fa-compass-drafting text-emerald-400 text-sm"></i>
+                                <div>
+                                    <div class="text-[11px] font-bold text-white leading-tight">Site Engineer</div>
+                                    <div class="text-[9px] text-slate-400">Vikram S.</div>
+                                </div>
+                            </button>
+
+                            <button type="button" onclick="selectRolePreset('supplier')" class="role-card p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-brand-500 text-left transition flex flex-col justify-between space-y-1">
+                                <i class="fa-solid fa-truck-ramp-box text-amber-400 text-sm"></i>
+                                <div>
+                                    <div class="text-[11px] font-bold text-white leading-tight">Supplier</div>
+                                    <div class="text-[9px] text-slate-400">Ultratech Hub</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="auth-login-form" onsubmit="handleAuthSubmit(event)" class="mt-5 space-y-4 text-xs">
+                        <div>
+                            <label class="font-semibold text-slate-300 block mb-1">Email Address / User ID</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                <input type="email" id="auth-email" required value="r.kumar@buildsmart-corp.in" class="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="font-semibold text-slate-300">Password</label>
+                                <a href="#" onclick="showToast('Password reset link dispatched to user email', 'info')" class="text-[11px] text-brand-500 hover:underline">Forgot Password?</a>
+                            </div>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                <input type="password" id="auth-password" required value="••••••••••••" class="w-full pl-9 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-brand-500">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                                    <i id="password-toggle-icon" class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="font-semibold text-slate-300 block mb-1">Selected Operating Profile Role</label>
+                            <select id="auth-role-select" onchange="syncRoleFromDropdown(this.value)" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-semibold focus:outline-none focus:border-brand-500">
+                                <option value="Senior Contractor">Senior Contractor</option>
+                                <option value="Project Manager">Project Manager</option>
+                                <option value="Site Engineer">Site Engineer</option>
+                                <option value="Supplier / Vendor">Supplier / Vendor</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-brand-500/25 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span id="btn-login-text">Authenticate & Open Portal</span>
+                        </button>
+                    </form>
+
+                    <!-- Registration Form (Hidden by default) -->
+                    <form id="auth-register-form" onsubmit="handleAuthSubmit(event)" class="hidden mt-5 space-y-3 text-xs">
+                        <div>
+                            <label class="font-semibold text-slate-300 block mb-1">Full Name</label>
+                            <input type="text" required placeholder="e.g. Ramesh Verma" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="font-semibold text-slate-300 block mb-1">Email</label>
+                                <input type="email" required placeholder="name@company.com" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="font-semibold text-slate-300 block mb-1">Phone</label>
+                                <input type="text" required placeholder="+91 98765 00000" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="font-semibold text-slate-300 block mb-1">Role Account Type</label>
+                            <select class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-brand-500">
+                                <option value="Senior Contractor">Senior Contractor</option>
+                                <option value="Project Manager">Project Manager</option>
+                                <option value="Site Engineer">Site Engineer</option>
+                                <option value="Supplier / Vendor">Supplier / Vendor</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/20">
+                            Create Account & Log In
+                        </button>
+                    </form>
+                </div>
+
+                <div class="text-center pt-2 text-[11px] text-slate-500">
+                    By signing in you agree to Enterprise Procurement & Site Safety Compliance Terms.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden md:flex md:w-64 bg-slate-900 text-white flex-col flex-shrink-0 z-30 shadow-xl">
+        <!-- Logo Header -->
+        <div class="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('dashboard')">
+                <div class="w-9 h-9 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-helmet-safety"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none tracking-tight text-white">Build<span class="text-brand-500">Smart</span></h1>
+                    <p class="text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-0.5">Construction ERP</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <div class="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Main Menu</div>
+            
+            <a onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-chart-pie w-6 text-slate-400"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <a onclick="navigateTo('projects')" id="nav-projects" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-building-user w-6 text-slate-400"></i>
+                <span>My Projects</span>
+            </a>
+
+            <a onclick="navigateTo('marketplace')" id="nav-marketplace" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-store w-6 text-slate-400"></i>
+                <span>Marketplace</span>
+            </a>
+
+            <a onclick="navigateTo('price-compare')" id="nav-price-compare" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-scale-balanced w-6 text-slate-400"></i>
+                <span>Price Compare</span>
+                <span class="ml-auto text-[10px] bg-brand-500/20 text-brand-500 border border-brand-500/30 px-2 py-0.5 rounded-full font-bold">Smart</span>
+            </a>
+
+            <a onclick="navigateTo('calculator')" id="nav-calculator" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-calculator w-6 text-slate-400"></i>
+                <span>Material Calculator</span>
+            </a>
+
+            <div class="px-3 pt-4 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Management</div>
+
+            <a onclick="navigateTo('budget')" id="nav-budget" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-wallet w-6 text-slate-400"></i>
+                <span>Budget & Expenses</span>
+            </a>
+
+            <a onclick="navigateTo('inventory')" id="nav-inventory" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-boxes-stacked w-6 text-slate-400"></i>
+                <span>Inventory Stock</span>
+                <span id="nav-badge-lowstock" class="ml-auto hidden bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full text-xs font-bold">0</span>
+            </a>
+
+            <a onclick="navigateTo('orders')" id="nav-orders" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-truck-fast w-6 text-slate-400"></i>
+                <span>Orders & Suppliers</span>
+            </a>
+
+            <a onclick="navigateTo('profile')" id="nav-profile" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl cursor-pointer transition-all duration-150 text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fa-solid fa-user-gear w-6 text-slate-400"></i>
+                <span>Profile & Settings</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar User Card Footer with Logout Option -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between">
+            <div class="flex items-center space-x-3 min-w-0">
+                <img id="sidebar-avatar" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=120" alt="User" class="w-10 h-10 rounded-full object-cover border-2 border-brand-500">
+                <div class="flex-1 min-w-0">
+                    <p id="sidebar-user-name" class="text-sm font-semibold text-white truncate">Rajesh Kumar</p>
+                    <p id="sidebar-user-role" class="text-xs text-slate-400 truncate">Senior Contractor</p>
+                </div>
+            </div>
+            <button onclick="logoutUser()" title="Sign Out" class="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-20 sticky top-0 shadow-sm">
+            
+            <!-- Mobile Menu Toggle & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center md:hidden">
+                    <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold mr-2">
+                        <i class="fa-solid fa-helmet-safety text-sm"></i>
+                    </div>
+                    <span class="font-bold text-slate-900 tracking-tight">Build<span class="text-brand-500">Smart</span></span>
+                </div>
+
+                <!-- Global Search Bar with Live Quick Results -->
+                <div class="relative hidden sm:block w-72 lg:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="global-search-input" onkeyup="handleGlobalSearch(this.value)" placeholder="Search projects, materials, suppliers..." class="w-full pl-10 pr-4 py-2 bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-xs text-slate-800 rounded-xl border border-transparent focus:border-slate-300 focus:outline-none transition">
+                    
+                    <!-- Search Results Popup -->
+                    <div id="search-results-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 max-h-96 overflow-y-auto">
+                        <div id="search-results-content" class="p-2 space-y-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Right Quick Actions & Notifications -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+
+                <!-- Quick Action Button -->
+                <button onclick="openModal('modal-add-expense')" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition border border-slate-200">
+                    <i class="fa-solid fa-plus text-slate-500"></i>
+                    <span>Expense</span>
+                </button>
+
+                <button onclick="openModal('modal-create-order')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold rounded-lg transition shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-cart-plus"></i>
+                    <span>New Order</span>
+                </button>
+
+                <!-- Notifications Dropdown Bell -->
+                <div class="relative">
+                    <button onclick="toggleNotificationsDropdown()" class="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                        <span id="notif-badge" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
+                    </button>
+
+                    <!-- Notifications Dropdown Card -->
+                    <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-fade-in">
+                        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-bell text-brand-500 text-sm"></i>
+                                <h3 class="font-bold text-xs uppercase tracking-wider">Alerts & Notifications</h3>
+                            </div>
+                            <button onclick="clearNotifications()" class="text-[11px] text-slate-400 hover:text-white transition">Clear All</button>
+                        </div>
+                        <div id="notif-list" class="max-h-80 overflow-y-auto divide-y divide-slate-100 text-xs">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Currency Indicator -->
+                <div class="hidden lg:flex items-center bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-600">
+                    <span id="currency-display">INR (₹)</span>
+                </div>
+
+                <!-- Header Logout Button for quick access -->
+                <button onclick="logoutUser()" class="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-xl transition" title="Logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN VIEW PORT (PAGE VIEWS) -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- PAGE 1: DASHBOARD VIEW -->
+            <section id="page-dashboard" class="page-view space-y-6 animate-fade-in">
+                <!-- Top Welcome Banner -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-6 rounded-2xl shadow-lg border border-slate-800 relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-2xl"></div>
+                    <div class="space-y-1 z-10">
+                        <span class="text-xs font-semibold uppercase tracking-widest text-brand-500">Site Operations Center</span>
+                        <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Construction Overview Dashboard</h2>
+                        <p class="text-xs text-slate-400">Live monitoring of material inventory, budgets, active sites & order cycles.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 z-10">
+                        <button onclick="openModal('modal-add-project')" class="px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center space-x-2">
+                            <i class="fa-solid fa-plus"></i><span>New Project</span>
+                        </button>
+                        <button onclick="navigateTo('price-compare')" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-semibold transition flex items-center space-x-2">
+                            <i class="fa-solid fa-scale-balanced"></i><span>Compare Prices</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                            <span>Projects Overview</span>
+                            <i class="fa-solid fa-building text-brand-500 text-base"></i>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpi-total-projects" class="text-2xl font-bold text-slate-900">0</div>
+                            <div class="flex items-center justify-between mt-1 text-[11px]">
+                                <span class="text-emerald-600 font-medium"><i class="fa-solid fa-circle text-[8px] mr-1"></i><span id="kpi-active-projects">0</span> Active</span>
+                                <span class="text-slate-400"><span id="kpi-completed-projects">0</span> Done</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                            <span>Total Budget</span>
+                            <i class="fa-solid fa-sack-dollar text-emerald-500 text-base"></i>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpi-total-budget" class="text-2xl font-bold text-slate-900">₹0</div>
+                            <div class="text-[11px] text-slate-400 mt-1">Allocated across sites</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                            <span>Expenses & Remaining</span>
+                            <i class="fa-solid fa-chart-line text-blue-500 text-base"></i>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpi-total-expenses" class="text-xl sm:text-2xl font-bold text-slate-900">₹0</div>
+                            <div class="text-[11px] font-medium text-emerald-600 mt-1 flex items-center justify-between">
+                                <span>Rem: <span id="kpi-remaining-budget">₹0</span></span>
+                                <span id="kpi-budget-percent" class="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                            <span>Orders & Inventory</span>
+                            <i class="fa-solid fa-truck-ramp-box text-amber-500 text-base"></i>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-baseline space-x-2">
+                                <span id="kpi-pending-orders" class="text-2xl font-bold text-slate-900">0</span>
+                                <span class="text-xs text-slate-500">Pending Orders</span>
+                            </div>
+                            <div class="text-[11px] text-amber-600 font-semibold mt-1 flex items-center">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                                <span id="kpi-low-stock">0 Low Stock Materials</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900">Monthly Expense Trend</h3>
+                                <p class="text-xs text-slate-400">Tracked expenditure over recent months</p>
+                            </div>
+                            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">2026 Fiscal</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chart-dashboard-expenses"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900">Expense Allocation</h3>
+                                <p class="text-xs text-slate-400">By material category</p>
+                            </div>
+                        </div>
+                        <div class="h-52 relative flex items-center justify-center">
+                            <canvas id="chart-category-donut"></canvas>
+                        </div>
+                        <div id="chart-donut-legend" class="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-100"></div>
+                    </div>
+                </div>
+
+                <!-- Active Projects & Activity Log -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Project Progress Cards -->
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-sm text-slate-900">Active Site Projects</h3>
+                            <button onclick="navigateTo('projects')" class="text-xs font-semibold text-brand-500 hover:text-brand-600">View All <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                        </div>
+                        <div id="dashboard-active-projects-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Low Stock Alerts & Recent Activities -->
+                    <div class="space-y-6">
+                        <!-- Low Stock Card -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-sm text-slate-900 flex items-center text-amber-600">
+                                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>Low Stock Inventory
+                                </h3>
+                                <button onclick="navigateTo('inventory')" class="text-xs text-brand-500 font-semibold">Manage</button>
+                            </div>
+                            <div id="dashboard-low-stock-list" class="space-y-2 max-h-40 overflow-y-auto divide-y divide-slate-100">
+                                <!-- Dynamic -->
+                            </div>
+                        </div>
+
+                        <!-- Activity Log Card -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                            <h3 class="font-bold text-sm text-slate-900">Recent Site Activity</h3>
+                            <div id="dashboard-activity-log" class="space-y-3 text-xs max-h-60 overflow-y-auto pr-1">
+                                <!-- Dynamic -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 2: MY PROJECTS VIEW -->
+            <section id="page-projects" class="page-view space-y-6 hidden animate-fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Construction Projects</h2>
+                        <p class="text-xs text-slate-500">Monitor deadlines, budget usage and site status.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-project')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center space-x-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-plus"></i><span>Create New Project</span>
+                    </button>
+                </div>
+
+                <!-- Filters & Search Bar -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+                    <div class="relative w-full md:w-72">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="project-search" oninput="renderProjectsPage()" placeholder="Search project title, client or location..." class="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        <select id="project-filter-status" onchange="renderProjectsPage()" class="py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl focus:outline-none text-slate-700">
+                            <option value="ALL">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Planning">Planning</option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <select id="project-sort-by" onchange="renderProjectsPage()" class="py-2 px-3 bg-slate-50 border border-slate-200 text-xs rounded-xl focus:outline-none text-slate-700">
+                            <option value="newest">Newest First</option>
+                            <option value="budget-high">Budget: High to Low</option>
+                            <option value="progress-high">Completion %</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Projects Grid -->
+                <div id="projects-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- PAGE 3: PROJECT DETAILS VIEW -->
+            <section id="page-project-details" class="page-view space-y-6 hidden animate-fade-in">
+                <!-- Back Header -->
+                <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="navigateTo('projects')" class="p-2 hover:bg-slate-200 rounded-xl transition text-slate-600">
+                            <i class="fa-solid fa-arrow-left text-sm"></i>
+                        </button>
+                        <div>
+                            <span id="pd-status-badge" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">Active</span>
+                            <h2 id="pd-title" class="text-xl font-bold text-slate-900 mt-0.5">Project Title Placeholder</h2>
+                            <p id="pd-location" class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i>Location</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="deleteCurrentProject()" class="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition border border-red-200">
+                            <i class="fa-solid fa-trash mr-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Summary KPI row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-400 font-medium">Total Budget</div>
+                        <div id="pd-budget" class="text-lg font-bold text-slate-900 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-400 font-medium">Expenses Recorded</div>
+                        <div id="pd-spent" class="text-lg font-bold text-brand-600 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-400 font-medium">Remaining Funds</div>
+                        <div id="pd-remaining" class="text-lg font-bold text-emerald-600 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-400 font-medium">Progress Stage</div>
+                        <div id="pd-progress-percent" class="text-lg font-bold text-blue-600 mt-1">0%</div>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="border-b border-slate-200 flex space-x-6 text-sm font-semibold">
+                    <button onclick="switchProjectTab('overview')" id="pd-tab-overview" class="pd-tab py-2.5 border-b-2 border-brand-500 text-brand-500">Overview</button>
+                    <button onclick="switchProjectTab('tasks')" id="pd-tab-tasks" class="pd-tab py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-900">Tasks</button>
+                    <button onclick="switchProjectTab('materials')" id="pd-tab-materials" class="pd-tab py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-900">Materials</button>
+                    <button onclick="switchProjectTab('expenses')" id="pd-tab-expenses" class="pd-tab py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-900">Expenses</button>
+                    <button onclick="switchProjectTab('team')" id="pd-tab-team" class="pd-tab py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-900">Team</button>
+                </div>
+
+                <!-- TAB CONTENT CONTAINER -->
+                <div id="pd-tab-content">
+                    <!-- Dynamically populated per tab -->
+                </div>
+            </section>
+
+            <!-- PAGE 4: MATERIAL MARKETPLACE -->
+            <section id="page-marketplace" class="page-view space-y-6 hidden animate-fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Construction Material Marketplace</h2>
+                        <p class="text-xs text-slate-500">Source certified raw materials directly from verified wholesale vendors.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="navigateTo('price-compare')" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition">
+                            <i class="fa-solid fa-scale-balanced mr-1.5"></i>Compare Prices
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        <input type="text" id="market-search" oninput="renderMarketplace()" placeholder="Search cement, steel, bricks..." class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none">
+                        
+                        <select id="market-category-filter" onchange="renderMarketplace()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none text-slate-700">
+                            <option value="ALL">All Categories</option>
+                            <option value="Cement">Cement & Concrete</option>
+                            <option value="Steel">Steel & Rebar</option>
+                            <option value="Bricks">Bricks & Blocks</option>
+                            <option value="Aggregates">Sand & Aggregates</option>
+                            <option value="Pipes">Piping & Plumbing</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Tools">Tools & Equipment</option>
+                        </select>
+
+                        <select id="market-supplier-filter" onchange="renderMarketplace()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none text-slate-700">
+                            <option value="ALL">All Vendors</option>
+                            <option value="Ultratech Direct">Ultratech Direct</option>
+                            <option value="Tata Tiscon Hub">Tata Tiscon Hub</option>
+                            <option value="National Bricks Co">National Bricks Co</option>
+                            <option value="BuildPro Supplies">BuildPro Supplies</option>
+                        </select>
+
+                        <select id="market-sort" onchange="renderMarketplace()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none text-slate-700">
+                            <option value="featured">Featured First</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="rating">Top Rated</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div id="marketplace-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Dynamically Populated -->
+                </div>
+            </section>
+
+            <!-- PAGE 5: PRICE COMPARISON ENGINE -->
+            <section id="page-price-compare" class="page-view space-y-6 hidden animate-fade-in">
+                <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg border border-slate-800 space-y-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full">Smart Procurement Engine</span>
+                    <h2 class="text-xl font-bold">Material Multi-Supplier Price Comparison</h2>
+                    <p class="text-xs text-slate-400">Compare unit rates, delivery timeframes, supplier ratings, and calculated savings instantly.</p>
+                </div>
+
+                <!-- Comparison Selector Card -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700">Select Material to Compare</label>
+                            <select id="compare-material-select" onchange="updatePriceComparison()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none">
+                                <option value="Grade 53 PPC Cement Bag">Grade 53 PPC Cement (50kg Bag)</option>
+                                <option value="12mm TMT Steel Rebar Fe550">12mm TMT Steel Rebar Fe550 (Ton)</option>
+                                <option value="First Class Red Clay Bricks">First Class Red Clay Bricks (1,000 pcs)</option>
+                                <option value="M-Sand Concrete Quality">M-Sand (Cubic Feet)</option>
+                                <option value="PVC Plumbing Pipe 4 inch">PVC Pipe 4 inch (10ft length)</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700">Required Quantity</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="compare-qty" value="500" min="1" oninput="updatePriceComparison()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none">
+                                <span id="compare-unit-label" class="text-xs text-slate-500 font-medium">Bags</span>
+                            </div>
+                        </div>
+
+                        <!-- Savings Alert Banner -->
+                        <div id="compare-savings-box" class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl flex items-center space-x-3 text-emerald-800">
+                            <i class="fa-solid fa-piggy-bank text-emerald-600 text-2xl"></i>
+                            <div>
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Potential Savings</div>
+                                <div id="compare-savings-amount" class="text-base font-bold">₹0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplier Comparison Matrix Cards Grid -->
+                <div id="comparison-matrix-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- PAGE 6: MATERIAL CALCULATOR -->
+            <section id="page-calculator" class="page-view space-y-6 hidden animate-fade-in">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Construction Requirement Calculator</h2>
+                    <p class="text-xs text-slate-500">Estimate precise material quantities and waste buffers for slab concrete, brickwork, and steel rebar.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Input Parameters Form -->
+                    <div class="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm text-slate-900 border-b border-slate-100 pb-2">Calculation Model</h3>
+                        
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700">Calculation Type</label>
+                            <select id="calc-type" onchange="toggleCalcFields()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none">
+                                <option value="concrete">Concrete Volume (Slab/Column)</option>
+                                <option value="brickwork">Brick Masonry Wall</option>
+                                <option value="steel">Slab Steel Rebar Tonnage</option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Calc Input Fields -->
+                        <div id="calc-fields-container" class="space-y-3">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-semibold text-slate-700">
+                                <span>Waste Allowance Buffer</span>
+                                <span id="calc-waste-val" class="text-brand-500 font-bold">5%</span>
+                            </div>
+                            <input type="range" id="calc-waste" min="0" max="20" value="5" oninput="document.getElementById('calc-waste-val').innerText = this.value + '%'; runCalculator();" class="w-full accent-brand-500">
+                        </div>
+
+                        <button onclick="runCalculator()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition shadow-md shadow-brand-500/20">
+                            Calculate Material Quantities
+                        </button>
+                    </div>
+
+                    <!-- Calculated Breakdown Results -->
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <h3 class="font-bold text-sm text-slate-900">Estimated Material Breakdown</h3>
+                                <span class="text-xs text-slate-400 font-medium">Standard Mix Ratio Applied</span>
+                            </div>
+
+                            <div id="calc-results-output" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <!-- Results cards rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Quick Push Actions -->
+                        <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <div class="text-xs text-slate-500">
+                                Total Estimated Cost: <span id="calc-total-cost" class="font-bold text-slate-900 text-sm">₹0</span>
+                            </div>
+                            <div class="flex space-x-2 w-full sm:w-auto">
+                                <button onclick="pushCalcToProject()" class="flex-1 sm:flex-none px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition">
+                                    <i class="fa-solid fa-folder-plus mr-1"></i>Add to Project
+                                </button>
+                                <button onclick="pushCalcToMarketplace()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold rounded-xl transition">
+                                    <i class="fa-solid fa-cart-shopping mr-1"></i>Order Materials
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 7: BUDGET & EXPENSES -->
+            <section id="page-budget" class="page-view space-y-6 hidden animate-fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Budget & Financial Expenses</h2>
+                        <p class="text-xs text-slate-500">Track site cash flows, vendor payments, equipment rentals & site labor expenses.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-expense')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i><span>Add Site Expense</span>
+                    </button>
+                </div>
+
+                <!-- Financial Health Warning Widget -->
+                <div id="budget-warning-alert" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xl"></i>
+                        <div>
+                            <h4 class="text-xs font-bold text-amber-900">Budget Warning Threshold Exceeded</h4>
+                            <p id="budget-warning-text" class="text-xs text-amber-700">Project budget consumption is high.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Ledger Summary Row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Allocated Budget</span>
+                        <div id="exp-total-budget" class="text-lg font-bold text-slate-900 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Total Spent</span>
+                        <div id="exp-total-spent" class="text-lg font-bold text-brand-600 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Remaining Balance</span>
+                        <div id="exp-remaining" class="text-lg font-bold text-emerald-600 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Pending Invoices</span>
+                        <div id="exp-pending-amount" class="text-lg font-bold text-amber-600 mt-1">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Expense Transactions Ledger Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="font-bold text-sm text-slate-900">Expense Transaction History</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="expense-search" oninput="renderExpensesTable()" placeholder="Search transactions..." class="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none">
+                            <select id="expense-category-filter" onchange="renderExpensesTable()" class="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none text-slate-700">
+                                <option value="ALL">All Categories</option>
+                                <option value="Materials">Materials</option>
+                                <option value="Labour">Labour</option>
+                                <option value="Transportation">Transportation</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Utilities">Utilities</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-700">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-y border-slate-200">
+                                <tr>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Project</th>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3">Description</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 8: INVENTORY MANAGEMENT -->
+            <section id="page-inventory" class="page-view space-y-6 hidden animate-fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Site Material Inventory</h2>
+                        <p class="text-xs text-slate-500">Real-time stock level monitoring, threshold alerts and inventory movements.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-material')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i><span>Add Material SKU</span>
+                    </button>
+                </div>
+
+                <!-- Stock Overview Counters -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Total Material SKUs</span>
+                        <div id="inv-total-skus" class="text-xl font-bold text-slate-900 mt-1">0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">In Stock</span>
+                        <div id="inv-instock-count" class="text-xl font-bold text-emerald-600 mt-1">0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Low Stock Alerts</span>
+                        <div id="inv-lowstock-count" class="text-xl font-bold text-amber-500 mt-1">0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-xs text-slate-400 font-medium">Out of Stock</span>
+                        <div id="inv-outstock-count" class="text-xl font-bold text-red-500 mt-1">0</div>
+                    </div>
+                </div>
+
+                <!-- Inventory Table -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="font-bold text-sm text-slate-900">Current Material Stock List</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="inventory-search" oninput="renderInventoryTable()" placeholder="Search material inventory..." class="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none">
+                            <select id="inventory-status-filter" onchange="renderInventoryTable()" class="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none text-slate-700">
+                                <option value="ALL">All Stock Statuses</option>
+                                <option value="IN STOCK">In Stock</option>
+                                <option value="LOW STOCK">Low Stock</option>
+                                <option value="OUT OF STOCK">Out of Stock</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-700">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-y border-slate-200">
+                                <tr>
+                                    <th class="p-3">Material Name</th>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3">Current Stock</th>
+                                    <th class="p-3">Min Threshold</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Supplier</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 9: ORDERS & SUPPLIERS -->
+            <section id="page-orders" class="page-view space-y-6 hidden animate-fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Orders & Verified Suppliers</h2>
+                        <p class="text-xs text-slate-500">Track shipment fulfillment timelines and vendor reliability metrics.</p>
+                    </div>
+                    <button onclick="openModal('modal-create-order')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs rounded-xl shadow-md transition flex items-center space-x-2">
+                        <i class="fa-solid fa-cart-plus"></i><span>Create Purchase Order</span>
+                    </button>
+                </div>
+
+                <!-- Orders / Suppliers Sub-Tabs -->
+                <div class="border-b border-slate-200 flex space-x-6 text-sm font-semibold">
+                    <button onclick="switchOrdersTab('orders')" id="orders-subtab-orders" class="orders-tab py-2.5 border-b-2 border-brand-500 text-brand-500">Purchase Orders</button>
+                    <button onclick="switchOrdersTab('suppliers')" id="orders-subtab-suppliers" class="orders-tab py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-900">Supplier Directory</button>
+                </div>
+
+                <!-- ORDERS SUBTAB CONTENT -->
+                <div id="orders-subtab-content-orders" class="space-y-6">
+                    <!-- Order Live Tracking Visualizer (Selected Order) -->
+                    <div id="order-tracker-card" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <span class="text-[10px] font-bold text-brand-500 uppercase tracking-wider">Live Delivery Status</span>
+                                <h3 id="tracker-order-id" class="text-sm font-bold text-slate-900">Order #ORD-8821</h3>
+                            </div>
+                            <button id="btn-advance-order" onclick="advanceOrderStatus()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition">
+                                Advance Status Stage <i class="fa-solid fa-angles-right ml-1"></i>
+                            </button>
+                        </div>
+
+                        <!-- Progress Step Tracker -->
+                        <div class="py-4">
+                            <div class="grid grid-cols-5 gap-2 text-center relative">
+                                <div id="step-Placed" class="space-y-1">
+                                    <div class="w-8 h-8 rounded-full bg-brand-500 text-white mx-auto flex items-center justify-center text-xs font-bold shadow-md">1</div>
+                                    <span class="text-[11px] font-bold text-slate-800">Placed</span>
+                                </div>
+                                <div id="step-Confirmed" class="space-y-1">
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 mx-auto flex items-center justify-center text-xs font-bold">2</div>
+                                    <span class="text-[11px] font-medium text-slate-500">Confirmed</span>
+                                </div>
+                                <div id="step-Shipped" class="space-y-1">
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 mx-auto flex items-center justify-center text-xs font-bold">3</div>
+                                    <span class="text-[11px] font-medium text-slate-500">Shipped</span>
+                                </div>
+                                <div id="step-Out for Delivery" class="space-y-1">
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 mx-auto flex items-center justify-center text-xs font-bold">4</div>
+                                    <span class="text-[11px] font-medium text-slate-500">Out Delivery</span>
+                                </div>
+                                <div id="step-Delivered" class="space-y-1">
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 mx-auto flex items-center justify-center text-xs font-bold">5</div>
+                                    <span class="text-[11px] font-medium text-slate-500">Delivered</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Orders Table Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                        <h3 class="font-bold text-sm text-slate-900">Purchase Order Records</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-700">
+                                <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-y border-slate-200">
+                                    <tr>
+                                        <th class="p-3">Order ID</th>
+                                        <th class="p-3">Project</th>
+                                        <th class="p-3">Supplier</th>
+                                        <th class="p-3">Items</th>
+                                        <th class="p-3">Total Cost</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-table-body" class="divide-y divide-slate-100">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUPPLIERS SUBTAB CONTENT -->
+                <div id="orders-subtab-content-suppliers" class="hidden space-y-6">
+                    <div id="suppliers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 10: PROFILE & SETTINGS -->
+            <section id="page-profile" class="page-view space-y-6 hidden animate-fade-in">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">User Profile & System Preferences</h2>
+                    <p class="text-xs text-slate-500">Manage site role permissions, system currency & budget alerts.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Profile Details Card -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 flex flex-col items-center text-center">
+                        <img id="profile-img-preview" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200" alt="Profile" class="w-24 h-24 rounded-full object-cover border-4 border-brand-500 shadow-md">
+                        <div>
+                            <h3 id="profile-name-heading" class="text-lg font-bold text-slate-900">Rajesh Kumar</h3>
+                            <p id="profile-role-badge" class="text-xs text-brand-600 font-semibold mt-0.5">Senior Construction Manager</p>
+                            <p class="text-xs text-slate-400 mt-1">Infrastructure & High-Rise Specialist</p>
+                        </div>
+                        <div class="w-full pt-4 border-t border-slate-100 text-left space-y-2 text-xs text-slate-600">
+                            <div><span class="font-semibold text-slate-800">Email:</span> <span id="profile-email-disp">r.kumar@buildsmart-corp.in</span></div>
+                            <div><span class="font-semibold text-slate-800">Phone:</span> +91 98765 43210</div>
+                            <div><span class="font-semibold text-slate-800">Company:</span> Apex Infraworks Ltd</div>
+                        </div>
+                        <button onclick="logoutUser()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                            <i class="fa-solid fa-right-from-bracket mr-1"></i>Sign Out Account
+                        </button>
+                    </div>
+
+                    <!-- Role & Settings Configurator -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <h3 class="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3">System Preferences</h3>
+                        
+                        <div class="space-y-4 text-xs">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="font-semibold text-slate-700">User Role</label>
+                                    <select id="setting-role-select" onchange="updateUserProfileRole(this.value)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none font-medium">
+                                        <option value="Senior Contractor">Senior Contractor</option>
+                                        <option value="Project Manager">Project Manager</option>
+                                        <option value="Site Engineer">Site Engineer</option>
+                                        <option value="Supplier / Vendor">Supplier / Vendor</option>
+                                    </select>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="font-semibold text-slate-700">Currency Symbol</label>
+                                    <select id="setting-currency-select" onchange="updateCurrency(this.value)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none font-medium">
+                                        <option value="INR">INR (₹)</option>
+                                        <option value="USD">USD ($)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 pt-2">
+                                <label class="font-semibold text-slate-700">Budget Warning Threshold (<span id="setting-budget-val">80</span>%)</label>
+                                <input type="range" id="setting-budget-slider" min="50" max="95" value="80" oninput="document.getElementById('setting-budget-val').innerText = this.value; state.budgetWarningThreshold = parseInt(this.value); checkBudgetThresholds();" class="w-full accent-brand-500">
+                                <p class="text-[11px] text-slate-400">Trigger dashboard warnings when project budget usage exceeds this percentage.</p>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold text-slate-800">Reset Application Demo Data</div>
+                                    <div class="text-[11px] text-slate-400">Restore default projects, inventory, orders & materials datasets.</div>
+                                </div>
+                                <button onclick="restoreSampleData()" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl border border-red-200 transition">
+                                    <i class="fa-solid fa-rotate-right mr-1"></i>Reset System
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- MOBILE BOTTOM NAVIGATION -->
+        <nav class="md:hidden bg-slate-900 border-t border-slate-800 h-16 flex items-center justify-around px-2 z-30">
+            <button onclick="navigateTo('dashboard')" id="mob-dashboard" class="flex flex-col items-center text-slate-400 hover:text-white text-[10px]">
+                <i class="fa-solid fa-chart-pie text-base"></i>
+                <span class="mt-0.5">Dash</span>
+            </button>
+            <button onclick="navigateTo('projects')" id="mob-projects" class="flex flex-col items-center text-slate-400 hover:text-white text-[10px]">
+                <i class="fa-solid fa-building-user text-base"></i>
+                <span class="mt-0.5">Projects</span>
+            </button>
+            <button onclick="navigateTo('marketplace')" id="mob-marketplace" class="flex flex-col items-center text-slate-400 hover:text-white text-[10px]">
+                <i class="fa-solid fa-store text-base"></i>
+                <span class="mt-0.5">Market</span>
+            </button>
+            <button onclick="navigateTo('price-compare')" id="mob-price-compare" class="flex flex-col items-center text-slate-400 hover:text-white text-[10px]">
+                <i class="fa-solid fa-scale-balanced text-base"></i>
+                <span class="mt-0.5">Compare</span>
+            </button>
+            <button onclick="navigateTo('inventory')" id="mob-inventory" class="flex flex-col items-center text-slate-400 hover:text-white text-[10px]">
+                <i class="fa-solid fa-boxes-stacked text-base"></i>
+                <span class="mt-0.5">Stock</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL: ADD NEW PROJECT -->
+    <div id="modal-add-project" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-sm text-slate-900">Create New Construction Project</h3>
+                <button onclick="closeModal('modal-add-project')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-add-project" onsubmit="handleCreateProject(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-700">Project Name *</label>
+                    <input type="text" id="np-name" required placeholder="e.g. Metro Sky Rise Phase 2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-700">Location *</label>
+                        <input type="text" id="np-location" required placeholder="e.g. Sector 62, Noida" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700">Client Name *</label>
+                        <input type="text" id="np-client" required placeholder="e.g. Apex Housing" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-700">Project Budget (₹) *</label>
+                        <input type="number" id="np-budget" required placeholder="15000000" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700">Status</label>
+                        <select id="np-status" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                            <option value="Active">Active</option>
+                            <option value="Planning">Planning</option>
+                            <option value="On Hold">On Hold</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-3 flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-add-project')" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl shadow-md">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD EXPENSE -->
+    <div id="modal-add-expense" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-sm text-slate-900">Record Site Expense</h3>
+                <button onclick="closeModal('modal-add-expense')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-add-expense" onsubmit="handleCreateExpense(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-700">Assign to Project *</label>
+                    <select id="ne-project" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-700">Expense Category *</label>
+                        <select id="ne-category" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                            <option value="Materials">Materials</option>
+                            <option value="Labour">Labour</option>
+                            <option value="Transportation">Transportation</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Utilities">Utilities</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700">Amount (₹) *</label>
+                        <input type="number" id="ne-amount" required placeholder="45000" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-700">Description / Memo *</label>
+                    <input type="text" id="ne-desc" required placeholder="e.g. Paid concrete mixer rental" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                </div>
+                <div class="pt-3 flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-add-expense')" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl shadow-md">Record Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE ORDER -->
+    <div id="modal-create-order" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-sm text-slate-900">Create Direct Purchase Order</h3>
+                <button onclick="closeModal('modal-create-order')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-create-order" onsubmit="handleCreateOrder(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-700">Target Project *</label>
+                    <select id="co-project" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none"></select>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-700">Select Supplier *</label>
+                    <select id="co-supplier" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none"></select>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-700">Material Item Name *</label>
+                    <input type="text" id="co-item" required placeholder="e.g. PPC Cement 50kg Bags" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-700">Quantity *</label>
+                        <input type="number" id="co-qty" required value="100" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700">Total Price (₹) *</label>
+                        <input type="number" id="co-price" required placeholder="42000" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                </div>
+                <div class="pt-3 flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-create-order')" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl shadow-md">Place Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD MATERIAL SKU TO INVENTORY -->
+    <div id="modal-add-material" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-sm text-slate-900">Add New Inventory SKU</h3>
+                <button onclick="closeModal('modal-add-material')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-add-material" onsubmit="handleCreateMaterial(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-700">Material Item Title *</label>
+                    <input type="text" id="nm-name" required placeholder="e.g. Asian Paints Primer 20L" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-700">Category *</label>
+                        <select id="nm-category" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                            <option value="Cement">Cement</option>
+                            <option value="Steel">Steel</option>
+                            <option value="Bricks">Bricks</option>
+                            <option value="Aggregates">Aggregates</option>
+                            <option value="Pipes">Pipes</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Tools">Tools</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700">Initial Stock *</label>
+                        <input type="number" id="nm-stock" required value="50" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-700">Min Threshold Limit *</label>
+                        <input type="number" id="nm-min" required value="20" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-700">Unit Type *</label>
+                        <input type="text" id="nm-unit" required placeholder="Bags / Tons / Pcs" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl mt-1 focus:outline-none">
+                    </div>
+                </div>
+                <div class="pt-3 flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-add-material')" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl shadow-md">Add Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL STATE APPLICATION OBJECT
+        const state = {
+            currentUser: {
+                name: "Rajesh Kumar",
+                role: "Senior Contractor",
+                email: "r.kumar@buildsmart-corp.in",
+                avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=120"
+            },
+            currency: 'INR',
+            currencySymbol: '₹',
+            budgetWarningThreshold: 80,
+            activePage: 'dashboard',
+            activeProjectTab: 'overview',
+            activeOrdersTab: 'orders',
+            selectedProjectId: 1,
+            selectedOrderId: 'ORD-8821',
+            notifications: [],
+            
+            // Preset suggested profiles for instant login
+            profiles: {
+                contractor: {
+                    name: "Rajesh Kumar",
+                    role: "Senior Contractor",
+                    email: "r.kumar@buildsmart-corp.in",
+                    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=120"
+                },
+                projectmanager: {
+                    name: "Ananya Roy",
+                    role: "Project Manager",
+                    email: "a.roy@buildsmart-corp.in",
+                    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120"
+                },
+                siteengineer: {
+                    name: "Vikram Singh",
+                    role: "Site Engineer",
+                    email: "v.singh@buildsmart-corp.in",
+                    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
+                },
+                supplier: {
+                    name: "Suresh Gupta",
+                    role: "Supplier / Vendor",
+                    email: "suresh@ultratech-direct.com",
+                    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120"
+                }
+            },
+
+            // Core Application Data Collections
+            projects: [
+                {
+                    id: 1,
+                    name: "Metro Sky Rise Phase 2",
+                    location: "Sector 62, Noida, UP",
+                    client: "Apex Infraworks Ltd",
+                    manager: "Rajesh Kumar",
+                    startDate: "2026-01-15",
+                    completionDate: "2026-11-30",
+                    budget: 15000000,
+                    progress: 68,
+                    status: "Active",
+                    tasks: [
+                        { id: 101, name: "Foundation Concrete Pouring", status: "Complete", priority: "High", deadline: "2026-02-28" },
+                        { id: 102, name: "Superstructure Steel Framing", status: "In Progress", priority: "High", deadline: "2026-06-15" },
+                        { id: 103, name: "External Brickwork Masonry", status: "To Do", priority: "Medium", deadline: "2026-08-30" }
+                    ],
+                    materialsAssigned: [
+                        { name: "Grade 53 PPC Cement", qty: 2500, unit: "Bags", status: "In Stock" },
+                        { name: "12mm TMT Rebar Fe550", qty: 120, unit: "Tons", status: "On Order" }
+                    ],
+                    team: [
+                        { name: "Rajesh Kumar", role: "Project Manager", avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=120" },
+                        { name: "Vikram Singh", role: "Site Structural Engineer", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120" }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: "Green Valley Eco Villas",
+                    location: "Whitefield, Bengaluru, KA",
+                    client: "Green Valley Developers",
+                    manager: "Priya Sharma",
+                    startDate: "2026-02-01",
+                    completionDate: "2026-09-15",
+                    budget: 12000000,
+                    progress: 42,
+                    status: "Active",
+                    tasks: [
+                        { id: 201, name: "Plumbing Line Laying", status: "In Progress", priority: "High", deadline: "2026-05-10" }
+                    ],
+                    materialsAssigned: [
+                        { name: "First Class Red Bricks", qty: 45000, unit: "Pcs", status: "In Stock" }
+                    ],
+                    team: [
+                        { name: "Priya Sharma", role: "Site Supervisor", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120" }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: "Highway Overpass Pier 4",
+                    location: "NH-48 Corridor, Gurugram",
+                    client: "National Highway Authority",
+                    manager: "Amit Patel",
+                    startDate: "2025-10-10",
+                    completionDate: "2026-04-30",
+                    budget: 25000000,
+                    progress: 92,
+                    status: "Active",
+                    tasks: [],
+                    materialsAssigned: [],
+                    team: []
+                },
+                {
+                    id: 4,
+                    name: "Commercial Hub Tower",
+                    location: "Cyber City, Hyderabad",
+                    client: "Horizon Commercials",
+                    manager: "Suresh Rao",
+                    startDate: "2026-04-01",
+                    completionDate: "2027-03-31",
+                    budget: 30000000,
+                    progress: 10,
+                    status: "Planning",
+                    tasks: [],
+                    materialsAssigned: [],
+                    team: []
+                }
+            ],
+
+            expenses: [
+                { id: "EXP-101", projectId: 1, category: "Materials", description: "Ultratech PPC Cement Order (500 Bags)", amount: 210000, date: "2026-03-02", status: "Paid" },
+                { id: "EXP-102", projectId: 1, category: "Labour", description: "Weekly Mason & Steel Fixer Wages", amount: 145000, date: "2026-03-05", status: "Paid" },
+                { id: "EXP-103", projectId: 2, category: "Equipment", description: "Tower Crane Rental Monthly Fee", amount: 180000, date: "2026-03-06", status: "Paid" },
+                { id: "EXP-104", projectId: 3, category: "Materials", description: "Tata Tiscon TMT Steel Rebar (25 Tons)", amount: 1625000, date: "2026-03-07", status: "Pending" }
+            ],
+
+            inventory: [
+                { id: "SKU-1", name: "Grade 53 PPC Cement Bag", category: "Cement", stock: 120, minLimit: 150, unit: "Bags", supplier: "Ultratech Direct", lastUpdated: "2026-03-08" },
+                { id: "SKU-2", name: "12mm TMT Steel Rebar Fe550", category: "Steel", stock: 35, minLimit: 10, unit: "Tons", supplier: "Tata Tiscon Hub", lastUpdated: "2026-03-07" },
+                { id: "SKU-3", name: "First Class Red Clay Bricks", category: "Bricks", stock: 18000, minLimit: 5000, unit: "Pcs", supplier: "National Bricks Co", lastUpdated: "2026-03-06" },
+                { id: "SKU-4", name: "M-Sand Aggregate Concrete Quality", category: "Aggregates", stock: 8, minLimit: 25, unit: "Cu.Ft", supplier: "BuildPro Supplies", lastUpdated: "2026-03-08" },
+                { id: "SKU-5", name: "PVC Plumbing Pipe 4 inch", category: "Pipes", stock: 240, minLimit: 50, unit: "Pcs", supplier: "Supreme Piping Hub", lastUpdated: "2026-03-01" }
+            ],
+
+            suppliers: [
+                { id: 1, name: "Ultratech Direct", category: "Cement & Aggregates", rating: 4.8, deliveryTime: "1-2 Days", phone: "+91 98112 33445", email: "orders@ultratech-direct.com", ordersPlaced: 24 },
+                { id: 2, name: "Tata Tiscon Hub", category: "Structural Steel Rebar", rating: 4.9, deliveryTime: "2-3 Days", phone: "+91 98221 44556", email: "sales@tatatiscon-hub.in", ordersPlaced: 18 },
+                { id: 3, name: "National Bricks Co", category: "Clay Bricks & AAC Blocks", rating: 4.3, deliveryTime: "3 Days", phone: "+91 98334 55667", email: "info@nationalbricks.com", ordersPlaced: 9 },
+                { id: 4, name: "BuildPro Supplies", category: "General Building Raw Material", rating: 4.5, deliveryTime: "1 Day", phone: "+91 98445 66778", email: "contact@buildpro.co.in", ordersPlaced: 31 }
+            ],
+
+            marketplaceItems: [
+                { id: 1, name: "Grade 53 PPC Cement Bag (50kg)", category: "Cement", supplier: "Ultratech Direct", price: 420, unit: "Bag", rating: 4.8, availability: "In Stock", delivery: "1 Day", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=300" },
+                { id: 2, name: "12mm TMT Steel Rebar Fe550", category: "Steel", supplier: "Tata Tiscon Hub", price: 65000, unit: "Ton", rating: 4.9, availability: "In Stock", delivery: "2 Days", image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=300" },
+                { id: 3, name: "First Class Red Clay Bricks", category: "Bricks", supplier: "National Bricks Co", price: 9000, unit: "1,000 Pcs", rating: 4.3, availability: "In Stock", delivery: "3 Days", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=300" },
+                { id: 4, name: "M-Sand Concrete Quality", category: "Aggregates", supplier: "BuildPro Supplies", price: 65, unit: "Cu.Ft", rating: 4.5, availability: "Low Stock", delivery: "1 Day", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=300" },
+                { id: 5, name: "PVC Plumbing Pipe 4 inch", category: "Pipes", supplier: "Supreme Piping Hub", price: 480, unit: "Length", rating: 4.6, availability: "In Stock", delivery: "1 Day", image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=300" }
+            ],
+
+            orders: [
+                { id: "ORD-8821", projectId: 1, supplier: "Ultratech Direct", items: "Grade 53 PPC Cement (500 Bags)", totalAmount: 210000, orderDate: "2026-03-02", status: "Shipped", expectedDelivery: "2026-03-09" },
+                { id: "ORD-8822", projectId: 2, supplier: "Tata Tiscon Hub", items: "12mm TMT Rebar (10 Tons)", totalAmount: 650000, orderDate: "2026-03-04", status: "Confirmed", expectedDelivery: "2026-03-10" }
+            ],
+
+            activityLog: [
+                { id: 1, text: "New Order #ORD-8821 shipped by Ultratech Direct", time: "10 mins ago", icon: "fa-truck-fast text-brand-500" },
+                { id: 2, text: "Expense recorded: ₹1,45,000 for Site Labor", time: "1 hour ago", icon: "fa-receipt text-emerald-500" },
+                { id: 3, text: "Inventory alert: M-Sand quantity fell below 25 cu.ft", time: "3 hours ago", icon: "fa-triangle-exclamation text-amber-500" }
+            ]
+        };
+
+        let chartInstanceExpense = null;
+        let chartInstanceDonut = null;
+
+        // AUTH & LOGIN LOGIC
+        function switchAuthTab(type) {
+            const loginTab = document.getElementById('tab-auth-login');
+            const regTab = document.getElementById('tab-auth-register');
+            const loginForm = document.getElementById('auth-login-form');
+            const regForm = document.getElementById('auth-register-form');
+
+            if (type === 'login') {
+                loginTab.className = "text-sm font-bold text-brand-500 border-b-2 border-brand-500 pb-2 transition";
+                regTab.className = "text-sm font-bold text-slate-400 hover:text-white border-b-2 border-transparent pb-2 transition";
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+            } else {
+                regTab.className = "text-sm font-bold text-emerald-500 border-b-2 border-emerald-500 pb-2 transition";
+                loginTab.className = "text-sm font-bold text-slate-400 hover:text-white border-b-2 border-transparent pb-2 transition";
+                regForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('auth-password');
+            const icon = document.getElementById('password-toggle-icon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                pwdInput.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        function selectRolePreset(roleKey) {
+            const profile = state.profiles[roleKey];
+            if (!profile) return;
+
+            state.currentUser = { ...profile };
+            document.getElementById('auth-email').value = profile.email;
+            document.getElementById('auth-role-select').value = profile.role;
+
+            showToast(`Selected Profile Preset: ${profile.name} (${profile.role})`, 'info');
+        }
+
+        function syncRoleFromDropdown(roleValue) {
+            state.currentUser.role = roleValue;
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            
+            // Sync active user credentials into global UI state
+            const emailInput = document.getElementById('auth-email').value;
+            const roleInput = document.getElementById('auth-role-select').value;
+            
+            state.currentUser.email = emailInput;
+            state.currentUser.role = roleInput;
+
+            updateUserUIProfile();
+
+            // Hide auth overlay
+            document.getElementById('auth-overlay').classList.add('hidden');
+            
+            // Initialize Dashboard & Systems
+            initApp();
+            showToast(`Welcome back, ${state.currentUser.name}! Authenticated as ${state.currentUser.role}.`, 'success');
+        }
+
+        function logoutUser() {
+            document.getElementById('auth-overlay').classList.remove('hidden');
+            showToast('Signed out successfully.', 'info');
+        }
+
+        function updateUserUIProfile() {
+            document.getElementById('sidebar-user-name').innerText = state.currentUser.name;
+            document.getElementById('sidebar-user-role').innerText = state.currentUser.role;
+            document.getElementById('sidebar-avatar').src = state.currentUser.avatar;
+
+            document.getElementById('profile-name-heading').innerText = state.currentUser.name;
+            document.getElementById('profile-role-badge').innerText = state.currentUser.role;
+            document.getElementById('profile-img-preview').src = state.currentUser.avatar;
+            document.getElementById('profile-email-disp').innerText = state.currentUser.email;
+            document.getElementById('setting-role-select').value = state.currentUser.role;
+        }
+
+        // INITIALIZATION ON DOM LOAD
+        window.addEventListener('DOMContentLoaded', () => {
+            updateUserUIProfile();
+        });
+
+        function initApp() {
+            checkLowStockNotifications();
+            checkBudgetThresholds();
+            renderDashboard();
+            toggleCalcFields();
+            setupProjectSelectOptions();
+        }
+
+        function navigateTo(pageId) {
+            state.activePage = pageId;
+            
+            // Hide all page sections
+            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+            
+            // Show target page
+            const target = document.getElementById(`page-${pageId}`);
+            if (target) target.classList.remove('hidden');
+
+            // Update Desktop Active Sidebar styling
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white');
+                el.classList.add('text-slate-300');
+            });
+            const activeNav = document.getElementById(`nav-${pageId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-slate-800', 'text-white');
+            }
+
+            // Render Page Specific Logic
+            if (pageId === 'dashboard') renderDashboard();
+            else if (pageId === 'projects') renderProjectsPage();
+            else if (pageId === 'project-details') renderProjectDetailsPage();
+            else if (pageId === 'marketplace') renderMarketplace();
+            else if (pageId === 'price-compare') updatePriceComparison();
+            else if (pageId === 'calculator') runCalculator();
+            else if (pageId === 'budget') renderBudgetPage();
+            else if (pageId === 'inventory') renderInventoryTable();
+            else if (pageId === 'orders') renderOrdersPage();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderDashboard() {
+            // Calculate Dashboard KPI Stats
+            const totalProjects = state.projects.length;
+            const activeProjects = state.projects.filter(p => p.status === 'Active').length;
+            const completedProjects = state.projects.filter(p => p.status === 'Completed').length;
+            const totalBudget = state.projects.reduce((acc, p) => acc + p.budget, 0);
+            const totalExpenses = state.expenses.reduce((acc, e) => acc + e.amount, 0);
+            const remainingBudget = totalBudget - totalExpenses;
+            const pendingOrders = state.orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
+            const lowStockItems = state.inventory.filter(i => i.stock <= i.minLimit).length;
+            const budgetUsedPercent = Math.round((totalExpenses / (totalBudget || 1)) * 100);
+
+            // Update KPI DOM
+            document.getElementById('kpi-total-projects').innerText = totalProjects;
+            document.getElementById('kpi-active-projects').innerText = activeProjects;
+            document.getElementById('kpi-completed-projects').innerText = completedProjects;
+            document.getElementById('kpi-total-budget').innerText = formatCurrency(totalBudget);
+            document.getElementById('kpi-total-expenses').innerText = formatCurrency(totalExpenses);
+            document.getElementById('kpi-remaining-budget').innerText = formatCurrency(remainingBudget);
+            document.getElementById('kpi-budget-percent').innerText = `${budgetUsedPercent}% Used`;
+            document.getElementById('kpi-pending-orders').innerText = pendingOrders;
+            document.getElementById('kpi-low-stock').innerText = `${lowStockItems} Low Stock Items`;
+
+            // Update Low Stock Navbar Badge
+            const navBadge = document.getElementById('nav-badge-lowstock');
+            if (lowStockItems > 0) {
+                navBadge.innerText = lowStockItems;
+                navBadge.classList.remove('hidden');
+            } else {
+                navBadge.classList.add('hidden');
+            }
+
+            // Render Dashboard Active Projects Cards
+            const activeProjectsContainer = document.getElementById('dashboard-active-projects-container');
+            activeProjectsContainer.innerHTML = '';
+            
+            state.projects.filter(p => p.status === 'Active').forEach(project => {
+                const projectExpenses = state.expenses.filter(e => e.projectId === project.id).reduce((a, e) => a + e.amount, 0);
+                const projectRemaining = project.budget - projectExpenses;
+                const projectUsedPercent = Math.round((projectExpenses / project.budget) * 100);
+                
+                let healthBadge = 'bg-emerald-100 text-emerald-800';
+                let healthText = 'Healthy';
+                if (projectUsedPercent > 85) {
+                    healthBadge = 'bg-red-100 text-red-800';
+                    healthText = 'Critical';
+                } else if (projectUsedPercent > 70) {
+                    healthBadge = 'bg-amber-100 text-amber-800';
+                    healthText = 'Warning';
+                }
+
+                activeProjectsContainer.innerHTML += `
+                    <div onclick="openProjectDetails(${project.id})" class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition cursor-pointer space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800 truncate max-w-[180px]">${project.name}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${healthBadge}">${healthText}</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[11px] text-slate-500">
+                                <span>Completion</span>
+                                <span class="font-bold text-slate-700">${project.progress}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-brand-500 h-full rounded-full" style="width: ${project.progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-200/60">
+                            <span class="text-slate-500">Spent: <strong class="text-slate-800">${formatCurrency(projectExpenses)}</strong></span>
+                            <span class="text-emerald-600 font-semibold">Rem: ${formatCurrency(projectRemaining)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Render Low Stock Dashboard Sidebar
+            const lowStockList = document.getElementById('dashboard-low-stock-list');
+            lowStockList.innerHTML = '';
+            const lowStockArray = state.inventory.filter(i => i.stock <= i.minLimit);
+            if (lowStockArray.length === 0) {
+                lowStockList.innerHTML = '<p class="text-xs text-slate-400 py-2">All materials adequately stocked.</p>';
+            } else {
+                lowStockArray.forEach(item => {
+                    lowStockList.innerHTML += `
+                        <div class="flex items-center justify-between py-1.5 text-xs">
+                            <div>
+                                <div class="font-semibold text-slate-800">${item.name}</div>
+                                <div class="text-[10px] text-amber-600">Stock: ${item.stock} ${item.unit} (Min: ${item.minLimit})</div>
+                            </div>
+                            <button onclick="quickReorderMaterial('${item.name}')" class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-bold transition">Reorder</button>
+                        </div>
+                    `;
+                });
+            }
+
+            // Render Activity Log
+            const activityLog = document.getElementById('dashboard-activity-log');
+            activityLog.innerHTML = '';
+            state.activityLog.slice(0, 5).forEach(act => {
+                activityLog.innerHTML += `
+                    <div class="flex items-start space-x-2.5">
+                        <div class="mt-0.5"><i class="fa-solid ${act.icon}"></i></div>
+                        <div class="flex-1">
+                            <p class="text-slate-700 leading-tight">${act.text}</p>
+                            <span class="text-[10px] text-slate-400">${act.time}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Render Expense Trend Canvas Chart
+            renderDashboardExpensesChart();
+            renderDashboardDonutChart();
+        }
+
+        function renderDashboardExpensesChart() {
+            const ctx = document.getElementById('chart-dashboard-expenses');
+            if (!ctx) return;
+
+            if (chartInstanceExpense) chartInstanceExpense.destroy();
+
+            chartInstanceExpense = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Monthly Expense (₹)',
+                        data: [420000, 680000, 2150000, 0, 0, 0],
+                        backgroundColor: '#f97316',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) { return state.currencySymbol + (value/1000) + 'k'; },
+                                font: { size: 10 }
+                            },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderDashboardDonutChart() {
+            const ctx = document.getElementById('chart-category-donut');
+            if (!ctx) return;
+
+            if (chartInstanceDonut) chartInstanceDonut.destroy();
+
+            // Calculate category breakdown
+            const catTotals = { Materials: 0, Labour: 0, Equipment: 0, Transportation: 0, Utilities: 0 };
+            state.expenses.forEach(e => {
+                if (catTotals[e.category] !== undefined) catTotals[e.category] += e.amount;
+                else catTotals.Materials += e.amount;
+            });
+
+            const labels = Object.keys(catTotals);
+            const data = Object.values(catTotals);
+            const colors = ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+
+            chartInstanceDonut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '70%'
+                }
+            });
+
+            // Legend rendering
+            const legendContainer = document.getElementById('chart-donut-legend');
+            legendContainer.innerHTML = '';
+            labels.forEach((label, idx) => {
+                legendContainer.innerHTML += `
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${colors[idx]}"></span>
+                        <span class="text-slate-600 truncate">${label}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderProjectsPage() {
+            const container = document.getElementById('projects-grid-container');
+            const searchVal = document.getElementById('project-search').value.toLowerCase();
+            const filterStatus = document.getElementById('project-filter-status').value;
+            const sortBy = document.getElementById('project-sort-by').value;
+
+            let filtered = state.projects.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchVal) || p.client.toLowerCase().includes(searchVal) || p.location.toLowerCase().includes(searchVal);
+                const matchesStatus = (filterStatus === 'ALL') || (p.status === filterStatus);
+                return matchesSearch && matchesStatus;
+            });
+
+            if (sortBy === 'budget-high') filtered.sort((a,b) => b.budget - a.budget);
+            else if (sortBy === 'progress-high') filtered.sort((a,b) => b.progress - a.progress);
+
+            container.innerHTML = '';
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 text-xs">No construction projects match your filter query.</div>';
+                return;
+            }
+
+            filtered.forEach(project => {
+                const spent = state.expenses.filter(e => e.projectId === project.id).reduce((a,e) => a + e.amount, 0);
+                const remaining = project.budget - spent;
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4 hover:shadow-md transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-700">${project.status}</span>
+                                <h3 class="font-bold text-slate-900 text-sm mt-1.5">${project.name}</h3>
+                                <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>${project.location}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-slate-500">Completion</span>
+                                <span class="text-brand-600">${project.progress}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div class="bg-brand-500 h-full rounded-full" style="width: ${project.progress}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl">
+                            <div>
+                                <span class="text-slate-400 font-medium">Budget:</span>
+                                <div class="font-bold text-slate-800">${formatCurrency(project.budget)}</div>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-medium">Spent:</span>
+                                <div class="font-bold text-brand-600">${formatCurrency(spent)}</div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex items-center justify-between border-t border-slate-100">
+                            <span class="text-xs text-slate-400 font-medium">Client: ${project.client}</span>
+                            <button onclick="openProjectDetails(${project.id})" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition">
+                                View Details <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openProjectDetails(projectId) {
+            state.selectedProjectId = projectId;
+            navigateTo('project-details');
+        }
+
+        function renderProjectDetailsPage() {
+            const project = state.projects.find(p => p.id === state.selectedProjectId);
+            if (!project) return;
+
+            const spent = state.expenses.filter(e => e.projectId === project.id).reduce((a,e) => a + e.amount, 0);
+            const remaining = project.budget - spent;
+
+            document.getElementById('pd-title').innerText = project.name;
+            document.getElementById('pd-location').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i>${project.location} • Client: ${project.client}`;
+            document.getElementById('pd-status-badge').innerText = project.status;
+            document.getElementById('pd-budget').innerText = formatCurrency(project.budget);
+            document.getElementById('pd-spent').innerText = formatCurrency(spent);
+            document.getElementById('pd-remaining').innerText = formatCurrency(remaining);
+            document.getElementById('pd-progress-percent').innerText = `${project.progress}%`;
+
+            switchProjectTab(state.activeProjectTab || 'overview');
+        }
+
+        function switchProjectTab(tabName) {
+            state.activeProjectTab = tabName;
+            document.querySelectorAll('.pd-tab').forEach(el => {
+                el.classList.remove('border-brand-500', 'text-brand-500');
+                el.classList.add('border-transparent', 'text-slate-500');
+            });
+            const activeBtn = document.getElementById(`pd-tab-${tabName}`);
+            if (activeBtn) activeBtn.classList.add('border-brand-500', 'text-brand-500');
+
+            const project = state.projects.find(p => p.id === state.selectedProjectId);
+            const content = document.getElementById('pd-tab-content');
+
+            if (tabName === 'overview') {
+                content.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
+                            <h3 class="font-bold text-sm text-slate-900">Project Meta Summary</h3>
+                            <div class="space-y-2 text-xs text-slate-700">
+                                <div class="flex justify-between py-1 border-b border-slate-100"><span>Project Manager:</span><span class="font-semibold">${project.manager}</span></div>
+                                <div class="flex justify-between py-1 border-b border-slate-100"><span>Start Date:</span><span class="font-semibold">${project.startDate}</span></div>
+                                <div class="flex justify-between py-1 border-b border-slate-100"><span>Expected Completion:</span><span class="font-semibold">${project.completionDate}</span></div>
+                                <div class="flex justify-between py-1 border-b border-slate-100"><span>Active Tasks:</span><span class="font-semibold">${project.tasks ? project.tasks.length : 0} Tasks</span></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
+                            <h3 class="font-bold text-sm text-slate-900">Health & Risk Assessment</h3>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-emerald-50 text-emerald-800 rounded-xl text-xs space-y-1">
+                                    <span class="font-bold"><i class="fa-solid fa-shield-halved mr-1"></i>Overall Project Health: Excellent</span>
+                                    <p class="text-[11px] text-emerald-700">Site milestones are progressing within allocated budget buffers.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (tabName === 'tasks') {
+                let tasksHtml = '';
+                (project.tasks || []).forEach(t => {
+                    tasksHtml += `
+                        <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl text-xs">
+                            <div class="flex items-center space-x-3">
+                                <i class="fa-regular fa-circle-check text-slate-400"></i>
+                                <div>
+                                    <div class="font-semibold text-slate-800">${t.name}</div>
+                                    <div class="text-[10px] text-slate-400">Deadline: ${t.deadline}</div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700">${t.priority} Priority</span>
+                        </div>
+                    `;
+                });
+                content.innerHTML = `
+                    <div class="space-y-4 animate-fade-in">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-sm text-slate-900">Task Schedule Log</h3>
+                            <button onclick="showToast('Task creation feature ready', 'info')" class="px-3 py-1.5 bg-brand-500 text-white rounded-xl text-xs font-semibold">+ Add Task</button>
+                        </div>
+                        <div class="space-y-2">${tasksHtml || '<p class="text-xs text-slate-400">No tasks assigned.</p>'}</div>
+                    </div>
+                `;
+            } else if (tabName === 'materials') {
+                content.innerHTML = `
+                    <div class="space-y-4 animate-fade-in">
+                        <h3 class="font-bold text-sm text-slate-900">Allocated Raw Materials</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            ${(project.materialsAssigned || []).map(m => `
+                                <div class="p-4 bg-white border border-slate-200 rounded-xl text-xs space-y-2">
+                                    <div class="flex justify-between font-bold text-slate-800">
+                                        <span>${m.name}</span>
+                                        <span class="text-brand-500">${m.qty} ${m.unit}</span>
+                                    </div>
+                                    <span class="inline-block px-2 py-0.5 text-[10px] bg-slate-100 font-semibold rounded">${m.status}</span>
+                                </div>
+                            `).join('') || '<p class="text-xs text-slate-400">No materials assigned yet.</p>'}
+                        </div>
+                    </div>
+                `;
+            } else if (tabName === 'expenses') {
+                const projectExp = state.expenses.filter(e => e.projectId === project.id);
+                content.innerHTML = `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-4 animate-fade-in">
+                        <h3 class="font-bold text-sm text-slate-900">Project Specific Expense Ledger</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 font-semibold">
+                                    <tr><th class="p-2">Date</th><th class="p-2">Category</th><th class="p-2">Description</th><th class="p-2">Amount</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${projectExp.map(e => `
+                                        <tr>
+                                            <td class="p-2">${e.date}</td>
+                                            <td class="p-2 font-semibold">${e.category}</td>
+                                            <td class="p-2">${e.description}</td>
+                                            <td class="p-2 font-bold text-slate-900">${formatCurrency(e.amount)}</td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="4" class="p-4 text-center text-slate-400">No expenses recorded for this project.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (tabName === 'team') {
+                content.innerHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+                        ${(project.team || []).map(mem => `
+                            <div class="p-4 bg-white border border-slate-200 rounded-2xl flex items-center space-x-3">
+                                <img src="${mem.avatar}" class="w-10 h-10 rounded-full object-cover border-2 border-brand-500">
+                                <div>
+                                    <div class="font-bold text-slate-800 text-xs">${mem.name}</div>
+                                    <div class="text-[11px] text-slate-400">${mem.role}</div>
+                                </div>
+                            </div>
+                        `).join('') || '<p class="text-xs text-slate-400">No team members explicitly listed.</p>'}
+                    </div>
+                `;
+            }
+        }
+
+        function renderMarketplace() {
+            const container = document.getElementById('marketplace-grid');
+            const search = document.getElementById('market-search').value.toLowerCase();
+            const cat = document.getElementById('market-category-filter').value;
+            const supplier = document.getElementById('market-supplier-filter').value;
+            const sort = document.getElementById('market-sort').value;
+
+            let items = state.marketplaceItems.filter(i => {
+                const matchS = i.name.toLowerCase().includes(search) || i.category.toLowerCase().includes(search);
+                const matchC = (cat === 'ALL') || (i.category === cat);
+                const matchSup = (supplier === 'ALL') || (i.supplier === supplier);
+                return matchS && matchC && matchSup;
+            });
+
+            if (sort === 'price-low') items.sort((a,b) => a.price - b.price);
+            else if (sort === 'price-high') items.sort((a,b) => b.price - a.price);
+
+            container.innerHTML = '';
+            items.forEach(item => {
+                container.innerHTML += `
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-36 object-cover">
+                            <div class="p-4 space-y-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">${item.category}</span>
+                                <h3 class="font-bold text-xs text-slate-900 leading-snug line-clamp-2">${item.name}</h3>
+                                <div class="flex items-center text-[11px] text-amber-500">
+                                    <i class="fa-solid fa-star mr-1"></i>
+                                    <span class="font-bold text-slate-700">${item.rating}</span>
+                                    <span class="text-slate-400 ml-2">• ${item.supplier}</span>
+                                </div>
+                                <div class="text-lg font-extrabold text-slate-900 pt-1">
+                                    ${formatCurrency(item.price)} <span class="text-xs font-normal text-slate-400">/ ${item.unit}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 pt-0 space-y-2">
+                            <button onclick="quickOrderFromMarket('${item.name}', ${item.price}, '${item.supplier}')" class="w-full py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold transition shadow-sm">
+                                Quick Buy / Order
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updatePriceComparison() {
+            const selectedMaterial = document.getElementById('compare-material-select').value;
+            const qty = parseInt(document.getElementById('compare-qty').value) || 100;
+            const matrixContainer = document.getElementById('comparison-matrix-container');
+
+            // Supplier options generator for demo
+            const supplierOptions = [
+                { name: "Ultratech Direct", basePrice: 420, rating: 4.8, delivery: "1 Day", stock: "High" },
+                { name: "BuildPro Wholesale", basePrice: 400, rating: 4.4, delivery: "3 Days", stock: "Medium" },
+                { name: "Apex Supply Hub", basePrice: 435, rating: 4.9, delivery: "1 Day", stock: "High" }
+            ];
+
+            if (selectedMaterial.includes('Steel')) {
+                supplierOptions[0] = { name: "Tata Tiscon Hub", basePrice: 65000, rating: 4.9, delivery: "2 Days", stock: "High" };
+                supplierOptions[1] = { name: "JSW Steel Direct", basePrice: 63500, rating: 4.6, delivery: "4 Days", stock: "High" };
+                supplierOptions[2] = { name: "National Infra Traders", basePrice: 66000, rating: 4.3, delivery: "1 Day", stock: "Low" };
+            }
+
+            // Calculate costs & best badges
+            const calculated = supplierOptions.map(sup => ({
+                ...sup,
+                totalCost: sup.basePrice * qty
+            }));
+
+            const lowestCost = Math.min(...calculated.map(c => c.totalCost));
+            const highestCost = Math.max(...calculated.map(c => c.totalCost));
+            const potentialSavings = highestCost - lowestCost;
+
+            // Update Savings banner
+            document.getElementById('compare-savings-amount').innerText = formatCurrency(potentialSavings);
+
+            matrixContainer.innerHTML = '';
+            calculated.forEach(sup => {
+                const isBestPrice = sup.totalCost === lowestCost;
+
+                matrixContainer.innerHTML += `
+                    <div class="bg-white rounded-2xl border ${isBestPrice ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200'} shadow-sm p-5 space-y-4 relative flex flex-col justify-between">
+                        ${isBestPrice ? '<span class="absolute -top-3 right-4 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">BEST PRICE</span>' : ''}
+                        <div class="space-y-3">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">${sup.name}</h3>
+                                <div class="flex items-center text-xs text-amber-500 mt-1">
+                                    <i class="fa-solid fa-star mr-1"></i><span class="font-bold text-slate-800">${sup.rating}</span>
+                                    <span class="text-slate-400 ml-2">• Delivery: ${sup.delivery}</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1 bg-slate-50 p-3 rounded-xl text-xs">
+                                <div class="flex justify-between text-slate-500"><span>Unit Price:</span><span class="font-bold text-slate-800">${formatCurrency(sup.basePrice)}</span></div>
+                                <div class="flex justify-between text-slate-500"><span>Quantity:</span><span class="font-bold text-slate-800">${qty}</span></div>
+                                <div class="flex justify-between text-slate-800 font-bold pt-2 border-t border-slate-200 text-sm">
+                                    <span>Total Cost:</span>
+                                    <span class="text-brand-600">${formatCurrency(sup.totalCost)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="orderFromComparison('${sup.name}', '${selectedMaterial}', ${qty}, ${sup.totalCost})" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs transition shadow-md shadow-brand-500/20">
+                            Select Supplier & Order
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleCalcFields() {
+            const type = document.getElementById('calc-type').value;
+            const container = document.getElementById('calc-fields-container');
+
+            if (type === 'concrete') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div><label class="font-semibold text-slate-700">Length (ft)</label><input type="number" id="cf-l" value="50" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+                        <div><label class="font-semibold text-slate-700">Width (ft)</label><input type="number" id="cf-w" value="30" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+                        <div><label class="font-semibold text-slate-700">Depth (in)</label><input type="number" id="cf-d" value="6" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+                    </div>
+                `;
+            } else if (type === 'brickwork') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div><label class="font-semibold text-slate-700">Wall Length (ft)</label><input type="number" id="cf-wl" value="40" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+                        <div><label class="font-semibold text-slate-700">Wall Height (ft)</label><input type="number" id="cf-wh" value="10" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="text-xs space-y-1">
+                        <label class="font-semibold text-slate-700">Slab Area (Sq.Ft)</label>
+                        <input type="number" id="cf-area" value="1500" class="w-full p-2 bg-slate-50 border rounded-xl">
+                    </div>
+                `;
+            }
+            runCalculator();
+        }
+
+        function runCalculator() {
+            const type = document.getElementById('calc-type').value;
+            const waste = parseFloat(document.getElementById('calc-waste').value) || 0;
+            const output = document.getElementById('calc-results-output');
+
+            let cost = 0;
+            if (type === 'concrete') {
+                const l = parseFloat(document.getElementById('cf-l')?.value || 50);
+                const w = parseFloat(document.getElementById('cf-w')?.value || 30);
+                const d = parseFloat(document.getElementById('cf-d')?.value || 6) / 12;
+                const cuFt = l * w * d;
+                const bagsReq = Math.ceil((cuFt * 0.22) * (1 + waste/100));
+                cost = bagsReq * 420;
+
+                output.innerHTML = `
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div class="text-xs text-slate-400 font-medium">Concrete Volume</div>
+                        <div class="text-xl font-bold text-slate-900 mt-1">${Math.round(cuFt)} cu.ft</div>
+                    </div>
+                    <div class="p-4 bg-brand-50 rounded-2xl border border-brand-200 text-brand-900">
+                        <div class="text-xs text-brand-600 font-medium">Recommended Cement</div>
+                        <div class="text-xl font-bold mt-1">${bagsReq} Bags</div>
+                        <div class="text-[10px] text-brand-500 mt-0.5">Includes ${waste}% waste cushion</div>
+                    </div>
+                `;
+            } else if (type === 'brickwork') {
+                const wl = parseFloat(document.getElementById('cf-wl')?.value || 40);
+                const wh = parseFloat(document.getElementById('cf-wh')?.value || 10);
+                const area = wl * wh;
+                const bricksReq = Math.ceil((area * 12) * (1 + waste/100));
+                cost = (bricksReq / 1000) * 9000;
+
+                output.innerHTML = `
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div class="text-xs text-slate-400 font-medium">Wall Surface Area</div>
+                        <div class="text-xl font-bold text-slate-900 mt-1">${area} sq.ft</div>
+                    </div>
+                    <div class="p-4 bg-brand-50 rounded-2xl border border-brand-200 text-brand-900">
+                        <div class="text-xs text-brand-600 font-medium">Recommended Bricks</div>
+                        <div class="text-xl font-bold mt-1">${bricksReq.toLocaleString()} Pcs</div>
+                    </div>
+                `;
+            } else {
+                const area = parseFloat(document.getElementById('cf-area')?.value || 1500);
+                const tonsReq = ((area * 3.5 / 1000) * (1 + waste/100)).toFixed(2);
+                cost = tonsReq * 65000;
+
+                output.innerHTML = `
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div class="text-xs text-slate-400 font-medium">Slab Structural Area</div>
+                        <div class="text-xl font-bold text-slate-900 mt-1">${area} sq.ft</div>
+                    </div>
+                    <div class="p-4 bg-brand-50 rounded-2xl border border-brand-200 text-brand-900">
+                        <div class="text-xs text-brand-600 font-medium">Steel Rebar Tonnage</div>
+                        <div class="text-xl font-bold mt-1">${tonsReq} Tons</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('calc-total-cost').innerText = formatCurrency(cost);
+        }
+
+        function renderBudgetPage() {
+            const totalBudget = state.projects.reduce((a,p) => a + p.budget, 0);
+            const totalSpent = state.expenses.reduce((a,e) => a + e.amount, 0);
+            const remaining = totalBudget - totalSpent;
+            const pendingAmount = state.expenses.filter(e => e.status === 'Pending').reduce((a,e) => a + e.amount, 0);
+
+            document.getElementById('exp-total-budget').innerText = formatCurrency(totalBudget);
+            document.getElementById('exp-total-spent').innerText = formatCurrency(totalSpent);
+            document.getElementById('exp-remaining').innerText = formatCurrency(remaining);
+            document.getElementById('exp-pending-amount').innerText = formatCurrency(pendingAmount);
+
+            renderExpensesTable();
+        }
+
+        function renderExpensesTable() {
+            const tbody = document.getElementById('expenses-table-body');
+            const search = document.getElementById('expense-search').value.toLowerCase();
+            const cat = document.getElementById('expense-category-filter').value;
+
+            let filtered = state.expenses.filter(e => {
+                const matchS = e.description.toLowerCase().includes(search) || e.id.toLowerCase().includes(search);
+                const matchC = (cat === 'ALL') || (e.category === cat);
+                return matchS && matchC;
+            });
+
+            tbody.innerHTML = '';
+            filtered.forEach(exp => {
+                const proj = state.projects.find(p => p.id === exp.projectId);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 text-slate-500">${exp.date}</td>
+                        <td class="p-3 font-semibold text-slate-800">${proj ? proj.name : 'General'}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">${exp.category}</span></td>
+                        <td class="p-3 text-slate-700">${exp.description}</td>
+                        <td class="p-3 font-bold text-slate-900">${formatCurrency(exp.amount)}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${exp.status}</span></td>
+                        <td class="p-3 text-right">
+                            <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventory-table-body');
+            const search = document.getElementById('inventory-search').value.toLowerCase();
+            const filterStatus = document.getElementById('inventory-status-filter').value;
+
+            let items = state.inventory.filter(i => {
+                let status = 'IN STOCK';
+                if (i.stock === 0) status = 'OUT OF STOCK';
+                else if (i.stock <= i.minLimit) status = 'LOW STOCK';
+
+                const matchS = i.name.toLowerCase().includes(search) || i.category.toLowerCase().includes(search);
+                const matchSt = (filterStatus === 'ALL') || (status === filterStatus);
+                return matchS && matchSt;
+            });
+
+            // Update stats cards
+            document.getElementById('inv-total-skus').innerText = state.inventory.length;
+            document.getElementById('inv-instock-count').innerText = state.inventory.filter(i => i.stock > i.minLimit).length;
+            document.getElementById('inv-lowstock-count').innerText = state.inventory.filter(i => i.stock <= i.minLimit && i.stock > 0).length;
+            document.getElementById('inv-outstock-count').innerText = state.inventory.filter(i => i.stock === 0).length;
+
+            tbody.innerHTML = '';
+            items.forEach(item => {
+                let statusBadge = 'bg-emerald-100 text-emerald-800';
+                let statusText = 'IN STOCK';
+                if (item.stock === 0) {
+                    statusBadge = 'bg-red-100 text-red-800';
+                    statusText = 'OUT OF STOCK';
+                } else if (item.stock <= item.minLimit) {
+                    statusBadge = 'bg-amber-100 text-amber-800';
+                    statusText = 'LOW STOCK';
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-semibold text-slate-800">${item.name}</td>
+                        <td class="p-3 text-slate-500">${item.category}</td>
+                        <td class="p-3 font-bold text-slate-900">${item.stock} ${item.unit}</td>
+                        <td class="p-3 text-slate-500">${item.minLimit} ${item.unit}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${statusBadge}">${statusText}</span></td>
+                        <td class="p-3 text-slate-600">${item.supplier}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="quickReorderMaterial('${item.name}')" class="px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded text-[10px] font-bold">Reorder</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function switchOrdersTab(tab) {
+            state.activeOrdersTab = tab;
+            document.querySelectorAll('.orders-tab').forEach(e => {
+                e.classList.remove('border-brand-500', 'text-brand-500');
+                e.classList.add('border-transparent', 'text-slate-500');
+            });
+            document.getElementById(`orders-subtab-${tab}`).classList.add('border-brand-500', 'text-brand-500');
+
+            if (tab === 'orders') {
+                document.getElementById('orders-subtab-content-orders').classList.remove('hidden');
+                document.getElementById('orders-subtab-content-suppliers').classList.add('hidden');
+            } else {
+                document.getElementById('orders-subtab-content-orders').classList.add('hidden');
+                document.getElementById('orders-subtab-content-suppliers').classList.remove('hidden');
+                renderSuppliersDirectory();
+            }
+        }
+
+        function renderOrdersPage() {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+
+            state.orders.forEach(order => {
+                const proj = state.projects.find(p => p.id === order.projectId);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-bold text-brand-600">${order.id}</td>
+                        <td class="p-3 text-slate-800 font-semibold">${proj ? proj.name : 'General'}</td>
+                        <td class="p-3 text-slate-600">${order.supplier}</td>
+                        <td class="p-3 text-slate-700">${order.items}</td>
+                        <td class="p-3 font-bold text-slate-900">${formatCurrency(order.totalAmount)}</td>
+                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">${order.status}</span></td>
+                        <td class="p-3 text-right">
+                            <button onclick="selectOrderForTracking('${order.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[10px] font-bold">Track</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            updateOrderTrackerUI();
+        }
+
+        function selectOrderForTracking(orderId) {
+            state.selectedOrderId = orderId;
+            updateOrderTrackerUI();
+            showToast(`Tracking order ${orderId}`, 'info');
+        }
+
+        function updateOrderTrackerUI() {
+            const order = state.orders.find(o => o.id === state.selectedOrderId) || state.orders[0];
+            if (!order) return;
+
+            document.getElementById('tracker-order-id').innerText = `Order #${order.id} • ${order.items}`;
+
+            const stages = ['Placed', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered'];
+            const currentIdx = stages.indexOf(order.status);
+
+            stages.forEach((stage, idx) => {
+                const el = document.getElementById(`step-${stage}`);
+                if (!el) return;
+                const circle = el.querySelector('div');
+                if (idx <= currentIdx) {
+                    circle.className = "w-8 h-8 rounded-full bg-brand-500 text-white mx-auto flex items-center justify-center text-xs font-bold shadow-md";
+                } else {
+                    circle.className = "w-8 h-8 rounded-full bg-slate-200 text-slate-500 mx-auto flex items-center justify-center text-xs font-bold";
+                }
+            });
+        }
+
+        function advanceOrderStatus() {
+            const order = state.orders.find(o => o.id === state.selectedOrderId) || state.orders[0];
+            if (!order) return;
+
+            const stages = ['Placed', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered'];
+            let currentIdx = stages.indexOf(order.status);
+            if (currentIdx < stages.length - 1) {
+                order.status = stages[currentIdx + 1];
+                
+                if (order.status === 'Delivered') {
+                    const invItem = state.inventory.find(i => order.items.toLowerCase().includes(i.name.toLowerCase().split(' ')[0]));
+                    if (invItem) {
+                        invItem.stock += 100;
+                    }
+                    showToast(`Order ${order.id} Delivered! Stock updated automatically.`, 'success');
+                }
+
+                renderOrdersPage();
+                renderDashboard();
+            }
+        }
+
+        function renderSuppliersDirectory() {
+            const grid = document.getElementById('suppliers-grid');
+            grid.innerHTML = '';
+
+            state.suppliers.forEach(sup => {
+                grid.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">${sup.name}</h3>
+                                <p class="text-xs text-slate-400">${sup.category}</p>
+                            </div>
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-50 text-amber-700 border border-amber-200"><i class="fa-solid fa-star mr-1"></i>${sup.rating}</span>
+                        </div>
+                        <div class="text-xs text-slate-600 space-y-1">
+                            <div><i class="fa-solid fa-truck text-slate-400 w-4"></i>Delivery: ${sup.deliveryTime}</div>
+                            <div><i class="fa-solid fa-phone text-slate-400 w-4"></i>${sup.phone}</div>
+                        </div>
+                        <button onclick="navigateTo('marketplace')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold transition">
+                            View Product Catalog
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function handleCreateProject(e) {
+            e.preventDefault();
+            const name = document.getElementById('np-name').value;
+            const location = document.getElementById('np-location').value;
+            const client = document.getElementById('np-client').value;
+            const budget = parseFloat(document.getElementById('np-budget').value) || 0;
+            const status = document.getElementById('np-status').value;
+
+            const newProj = {
+                id: Date.now(),
+                name, location, client, manager: state.currentUser.name,
+                startDate: new Date().toISOString().split('T')[0],
+                completionDate: "2026-12-31",
+                budget, progress: 0, status, tasks: [], materialsAssigned: [], team: []
+            };
+
+            state.projects.push(newProj);
+            logActivity(`Created new project: ${name}`, 'fa-building text-brand-500');
+            closeModal('modal-add-project');
+            setupProjectSelectOptions();
+            renderDashboard();
+            renderProjectsPage();
+            showToast(`Project "${name}" created successfully!`, 'success');
+        }
+
+        function handleCreateExpense(e) {
+            e.preventDefault();
+            const projectId = parseInt(document.getElementById('ne-project').value);
+            const category = document.getElementById('ne-category').value;
+            const amount = parseFloat(document.getElementById('ne-amount').value) || 0;
+            const description = document.getElementById('ne-desc').value;
+
+            const newExp = {
+                id: `EXP-${Math.floor(100 + Math.random() * 900)}`,
+                projectId, category, description, amount,
+                date: new Date().toISOString().split('T')[0],
+                status: 'Paid'
+            };
+
+            state.expenses.unshift(newExp);
+            logActivity(`Recorded expense: ${formatCurrency(amount)} for ${category}`, 'fa-receipt text-emerald-500');
+            closeModal('modal-add-expense');
+            checkBudgetThresholds();
+            renderDashboard();
+            renderBudgetPage();
+            showToast(`Expense of ${formatCurrency(amount)} recorded!`, 'success');
+        }
+
+        function handleCreateOrder(e) {
+            e.preventDefault();
+            const projectId = parseInt(document.getElementById('co-project').value);
+            const supplier = document.getElementById('co-supplier').value;
+            const item = document.getElementById('co-item').value;
+            const qty = document.getElementById('co-qty').value;
+            const price = parseFloat(document.getElementById('co-price').value) || 0;
+
+            const newOrder = {
+                id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+                projectId, supplier, items: `${item} (${qty})`,
+                totalAmount: price,
+                orderDate: new Date().toISOString().split('T')[0],
+                status: 'Placed',
+                expectedDelivery: '3 Days'
+            };
+
+            state.orders.unshift(newOrder);
+            
+            state.expenses.unshift({
+                id: `EXP-${Math.floor(100 + Math.random() * 900)}`,
+                projectId, category: 'Materials',
+                description: `PO ${newOrder.id}: ${item}`,
+                amount: price,
+                date: new Date().toISOString().split('T')[0],
+                status: 'Pending'
+            });
+
+            logActivity(`Created purchase order #${newOrder.id} with ${supplier}`, 'fa-cart-shopping text-brand-500');
+            closeModal('modal-create-order');
+            renderDashboard();
+            renderOrdersPage();
+            showToast(`Order #${newOrder.id} placed successfully!`, 'success');
+        }
+
+        function handleCreateMaterial(e) {
+            e.preventDefault();
+            const name = document.getElementById('nm-name').value;
+            const category = document.getElementById('nm-category').value;
+            const stock = parseInt(document.getElementById('nm-stock').value) || 0;
+            const minLimit = parseInt(document.getElementById('nm-min').value) || 10;
+            const unit = document.getElementById('nm-unit').value;
+
+            state.inventory.push({
+                id: `SKU-${state.inventory.length + 1}`,
+                name, category, stock, minLimit, unit,
+                supplier: "Wholesale Vendor",
+                lastUpdated: new Date().toISOString().split('T')[0]
+            });
+
+            closeModal('modal-add-material');
+            renderInventoryTable();
+            checkLowStockNotifications();
+            showToast(`Material SKU "${name}" added to inventory`, 'success');
+        }
+
+        function checkBudgetThresholds() {
+            state.projects.forEach(proj => {
+                const spent = state.expenses.filter(e => e.projectId === proj.id).reduce((a,e) => a + e.amount, 0);
+                const percent = Math.round((spent / proj.budget) * 100);
+
+                if (percent >= state.budgetWarningThreshold) {
+                    addNotification(`Budget Warning: Project "${proj.name}" has used ${percent}% of allocated funds!`, 'amber');
+                    document.getElementById('budget-warning-alert')?.classList.remove('hidden');
+                    const warnText = document.getElementById('budget-warning-text');
+                    if (warnText) warnText.innerText = `Project "${proj.name}" has consumed ${percent}% of budget.`;
+                }
+            });
+        }
+
+        function checkLowStockNotifications() {
+            state.inventory.forEach(item => {
+                if (item.stock <= item.minLimit) {
+                    addNotification(`Low Stock: ${item.name} is down to ${item.stock} ${item.unit}!`, 'red');
+                }
+            });
+        }
+
+        function addNotification(text, type) {
+            state.notifications.unshift({ id: Date.now(), text, type });
+            updateNotifBadge();
+        }
+
+        function updateNotifBadge() {
+            const badge = document.getElementById('notif-badge');
+            badge.innerText = state.notifications.length;
+            
+            const list = document.getElementById('notif-list');
+            list.innerHTML = '';
+            state.notifications.slice(0, 6).forEach(n => {
+                list.innerHTML += `
+                    <div class="p-3 flex items-start space-x-2">
+                        <i class="fa-solid fa-triangle-exclamation ${n.type === 'red' ? 'text-red-500' : 'text-amber-500'} mt-0.5"></i>
+                        <p class="text-slate-700 leading-snug">${n.text}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleNotificationsDropdown() {
+            document.getElementById('notifications-dropdown').classList.toggle('hidden');
+        }
+
+        function clearNotifications() {
+            state.notifications = [];
+            updateNotifBadge();
+        }
+
+        function handleGlobalSearch(query) {
+            const dropdown = document.getElementById('search-results-dropdown');
+            const content = document.getElementById('search-results-content');
+
+            if (!query || query.trim() === '') {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const q = query.toLowerCase();
+            content.innerHTML = '';
+
+            const matchedProjects = state.projects.filter(p => p.name.toLowerCase().includes(q));
+            const matchedItems = state.marketplaceItems.filter(i => i.name.toLowerCase().includes(q));
+
+            if (matchedProjects.length === 0 && matchedItems.length === 0) {
+                content.innerHTML = '<p class="text-xs text-slate-400 p-2">No matching records found.</p>';
+            } else {
+                matchedProjects.forEach(p => {
+                    content.innerHTML += `
+                        <div onclick="openProjectDetails(${p.id}); document.getElementById('search-results-dropdown').classList.add('hidden');" class="p-2 hover:bg-slate-100 rounded-lg cursor-pointer text-xs flex justify-between">
+                            <span class="font-semibold text-slate-800">${p.name}</span>
+                            <span class="text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded">Project</span>
+                        </div>
+                    `;
+                });
+                matchedItems.forEach(i => {
+                    content.innerHTML += `
+                        <div onclick="navigateTo('marketplace'); document.getElementById('search-results-dropdown').classList.add('hidden');" class="p-2 hover:bg-slate-100 rounded-lg cursor-pointer text-xs flex justify-between">
+                            <span class="font-semibold text-slate-800">${i.name}</span>
+                            <span class="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">Material</span>
+                        </div>
+                    `;
+                });
+            }
+
+            dropdown.classList.remove('hidden');
+        }
+
+        function setupProjectSelectOptions() {
+            const selects = [document.getElementById('ne-project'), document.getElementById('co-project')];
+            selects.forEach(sel => {
+                if (!sel) return;
+                sel.innerHTML = '';
+                state.projects.forEach(p => {
+                    sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                });
+            });
+
+            const supplierSel = document.getElementById('co-supplier');
+            if (supplierSel) {
+                supplierSel.innerHTML = '';
+                state.suppliers.forEach(s => {
+                    supplierSel.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+                });
+            }
+        }
+
+        function openModal(modalId) {
+            setupProjectSelectOptions();
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function quickOrderFromMarket(itemName, price, supplier) {
+            openModal('modal-create-order');
+            document.getElementById('co-item').value = itemName;
+            document.getElementById('co-price').value = price;
+        }
+
+        function quickReorderMaterial(itemName) {
+            openModal('modal-create-order');
+            document.getElementById('co-item').value = itemName;
+            document.getElementById('co-qty').value = 100;
+        }
+
+        function orderFromComparison(supplierName, materialName, qty, totalCost) {
+            openModal('modal-create-order');
+            document.getElementById('co-supplier').value = supplierName;
+            document.getElementById('co-item').value = materialName;
+            document.getElementById('co-qty').value = qty;
+            document.getElementById('co-price').value = totalCost;
+        }
+
+        function pushCalcToProject() {
+            showToast('Calculated requirements pushed to selected project!', 'success');
+        }
+
+        function pushCalcToMarketplace() {
+            navigateTo('marketplace');
+            showToast('Navigated to marketplace to procure materials.', 'info');
+        }
+
+        function deleteCurrentProject() {
+            state.projects = state.projects.filter(p => p.id !== state.selectedProjectId);
+            navigateTo('projects');
+            renderDashboard();
+            showToast('Project deleted', 'info');
+        }
+
+        function deleteExpense(expId) {
+            state.expenses = state.expenses.filter(e => e.id !== expId);
+            renderBudgetPage();
+            renderDashboard();
+            showToast('Expense removed', 'info');
+        }
+
+        function logActivity(text, icon) {
+            state.activityLog.unshift({ id: Date.now(), text, time: 'Just now', icon });
+        }
+
+        function updateUserProfileRole(role) {
+            state.currentUser.role = role;
+            updateUserUIProfile();
+            showToast(`Role updated to ${role}`, 'info');
+        }
+
+        function updateCurrency(curr) {
+            state.currency = curr;
+            state.currencySymbol = curr === 'INR' ? '₹' : '$';
+            document.getElementById('currency-display').innerText = `${curr} (${state.currencySymbol})`;
+            renderDashboard();
+            renderProjectsPage();
+            renderBudgetPage();
+            showToast(`Currency changed to ${curr}`, 'info');
+        }
+
+        function restoreSampleData() {
+            location.reload();
+        }
+
+        function formatCurrency(amount) {
+            if (state.currency === 'USD') {
+                return '$' + (amount / 80).toLocaleString(undefined, { maximumFractionDigits: 0 });
+            }
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center space-x-2 px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold text-white animate-fade-in ${type === 'success' ? 'bg-emerald-600' : 'bg-slate-900'}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
